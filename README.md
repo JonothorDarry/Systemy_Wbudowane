@@ -2,6 +2,8 @@
 Zasady kompilacji:
 
 python setup.py build_ext --inplace
+
+
 python FindSymbols.py ../kacykowanie/zdjs/Trivial/DSC_0054.JPG # przykładowe miejsce - pojedynczy obraz
 
 Problemy:
