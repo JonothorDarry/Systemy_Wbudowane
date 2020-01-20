@@ -1,3 +1,9 @@
+###################
+### BAZA CYTHON ###
+###################
+
+
+
 import math
 import numpy as np
 cimport numpy as np
@@ -11,13 +17,13 @@ def petrify(path, axe):
     for i in range(len(path)):
         axe.scatter(path[i][1], path[i][0], color='red')
 
-def blackening(np.ndarray[unsigned char, ndim=2] bwimg, np.ndarray[long, ndim=2] path):
+def blackening(np.ndarray[unsigned char, ndim=2] bwimg, np.ndarray[int, ndim=2] path, int lenpath):
     cdef int s=0, t=0, gr=0, ij, i, jj
-    cdef np.ndarray[int, ndim=1] dep=np.zeros((len(path)), dtype='int32')
-    cdef np.ndarray[int, ndim=1] end1=np.zeros((len(path)), dtype='int32')
-    cdef np.ndarray[int, ndim=1] end2=np.zeros((len(path)), dtype='int32')
+    cdef np.ndarray[int, ndim=1] dep=np.zeros((lenpath), dtype='int32')
+    cdef np.ndarray[int, ndim=1] end1=np.zeros((lenpath), dtype='int32')
+    cdef np.ndarray[int, ndim=1] end2=np.zeros((lenpath), dtype='int32')
     
-    for i in range(0, len(path)):
+    for i in range(0, lenpath):
         for ij in range(0, -10, -1):
             a, b=path[i,0]+ij, path[i,1]
             if (bwimg[a,b]==255):
@@ -44,11 +50,11 @@ def blackening(np.ndarray[unsigned char, ndim=2] bwimg, np.ndarray[long, ndim=2]
     #print('DEPTH {} {}'.format(grub, dep))
     
     #Midian - środkowy punkt pasma w punkcie
-    midian=[0]*len(path)
+    midian=[0]*lenpath
     cur=0
     last=0
     midian[0]=path[0,0]
-    for i in range(1, len(path)):
+    for i in range(1, lenpath):
         if (dep[i]>grub+3):
             cur+=1
             continue
@@ -68,7 +74,7 @@ def blackening(np.ndarray[unsigned char, ndim=2] bwimg, np.ndarray[long, ndim=2]
             
     #print(list(zip(path, midian)))
     dt0=math.ceil(grub)
-    for i in range(len(path)):
+    for i in range(lenpath):
         sc, t1, t2=0, 0, 0
         for jj in range(1, 10):
             if (bwimg[midian[i]+jj, path[i,1]]==255):
@@ -88,21 +94,15 @@ def blackening(np.ndarray[unsigned char, ndim=2] bwimg, np.ndarray[long, ndim=2]
     
     return (sum(midian[c1:c2])/len(midian[c1:c2]), grub)
 
-
-def cleanblack(bwimg, pathway):
-    for x in pathway:
-        bwimg[x[0]-5:x[0]+5,x[1]]=255
-    return (1,2)
-
 #limit - o ile y może się odchylić od y2
-def pathfinder(np.ndarray[unsigned char, ndim=2] bwimg, F, np.ndarray[unsigned char, ndim=2] check, np.ndarray[int, ndim=1] par, np.ndarray[int, ndim=1] w, int y, int x, int p, int vv, int lowx, int highx, int y2, np.ndarray[int, ndim=1] miss, np.ndarray[int, ndim=1] added, np.ndarray[int, ndim=1] Vertikal, int myconst, int Vertikalpenalty, np.ndarray[int, ndim=1] bestl, np.ndarray[int, ndim=1] bestr, np.ndarray[int, ndim=1] slaycount):
+def pathfinder(np.ndarray[unsigned char, ndim=2] bwimg, np.ndarray[int, ndim=2] F, np.ndarray[unsigned char, ndim=2] check, np.ndarray[int, ndim=1] par, np.ndarray[int, ndim=1] w, int y, int x, int p, int vv, int lowx, int highx, int y2, np.ndarray[int, ndim=1] miss, np.ndarray[int, ndim=1] added, np.ndarray[int, ndim=1] Vertikal, int myconst, int Vertikalpenalty, np.ndarray[int, ndim=1] bestl, np.ndarray[int, ndim=1] bestr, np.ndarray[int, ndim=1] slaycount):
     cdef int limit=10000, l2=Hyperparameters['Blackness']
     
     if (y>=bwimg.shape[0] or x>=bwimg.shape[1] or x<0 or y<0 or abs(y-y2)>limit or check[y,x]==1):
         return (p, lowx, highx)
     if ((bwimg[y,x]==255 or (x>=lowx and x<=highx)) and added[vv]+1>myconst):
         return (p, lowx, highx)
-    if (y>F[vv][0] or y<F[vv][0]):
+    if (y>F[vv,0] or y<F[vv,0]):
         if ((Vertikal[vv]+Hyperparameters['Vertikal'][1]>Vertikalpenalty) or (bwimg[y,x]==255 and Vertikal[vv]+Hyperparameters['Vertikal'][2]>Vertikalpenalty)):
             return (p, lowx, highx)
     if ((bwimg[y,x]==255 or (x>=bestl[vv] and x<=bestr[vv])) and slaycount[vv]+1>Hyperparameters['Change']):
@@ -113,24 +113,23 @@ def pathfinder(np.ndarray[unsigned char, ndim=2] bwimg, F, np.ndarray[unsigned c
             miss[p]=miss[vv]+1
         else:
             miss[p]=0
-            #miss[p]=max(miss[vv]-2, 0)
-        if (y>F[vv][0] or y<F[vv][0]):
+        if (y>F[vv,0] or y<F[vv,0]):
             if (bwimg[y,x]==255):
                 Vertikal[p]=Vertikal[vv]+Hyperparameters['Vertikal'][2]
             else:
                 Vertikal[p]=Vertikal[vv]+Hyperparameters['Vertikal'][1]
         else:
             Vertikal[p]=max(Vertikal[vv]-Hyperparameters['Vertikal'][3], 0)
-        F.append((y, x))
+        F[p,0]=y
+        F[p,1]=x
+        
         check[y,x]=1
         par[p]=vv
         
-        #if (bwimg[y,x]==0 and x<bestl[vv]):
         if (x<bestl[vv]):
             slaycount[p]=0
             bestl[p]=x
             bestr[p]=bestr[vv]
-        #elif (x>bestr[vv]):
         elif (x>bestr[vv]):
             slaycount[p]=0
             bestr[p]=x
@@ -157,7 +156,7 @@ def pathfinder(np.ndarray[unsigned char, ndim=2] bwimg, F, np.ndarray[unsigned c
 
 def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
     cdef int skv=2, y=1, kk=1, iF=0, jF=1, deadl=0, deadr=1, highx, lowx, x1, x2, C=140000, myconst=Hyperparameters['Upgrade']
-    cdef int Vertikalpenalty=Hyperparameters['Vertikal'][0]
+    cdef int Vertikalpenalty=Hyperparameters['Vertikal'][0], lenpath=0, lp2=0, D=3000
     solution=[]
     cdef np.ndarray[unsigned char, ndim=2] check=np.zeros((bwimg.shape[0], bwimg.shape[1]), dtype='uint8')
     cdef np.ndarray[int, ndim=1] par=np.zeros((C), dtype='int32')
@@ -169,6 +168,9 @@ def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
     cdef np.ndarray[int, ndim=1] bestl=np.zeros((C), dtype='int32')
     cdef np.ndarray[int, ndim=1] bestr=np.zeros((C), dtype='int32')
     cdef np.ndarray[int, ndim=1] slaycount=np.zeros((C), dtype='int32')
+    cdef np.ndarray[int, ndim=2] F=np.zeros((C, 2), dtype='int32')
+    cdef np.ndarray[int, ndim=2] pathway=np.zeros((D, 2), dtype='int32')
+    cdef np.ndarray[int, ndim=2] p2=np.zeros((D, 2), dtype='int32')
     
     for kk in range(1, skv):
         y=1
@@ -180,8 +182,10 @@ def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
                 xl=kk*(bwimg.shape[1]//skv)
                 yl=y
                 
-                pathway=[]
-                F=[(yl, xl)]
+                lenpath=0
+                F[0,0]=yl
+                F[0,1]=xl
+                
                 par[0]=-1
                 w[0]=0
                 miss[0]=0
@@ -193,42 +197,47 @@ def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
                 highx, lowx=xl, xl
                 iF, jF=0, 1
                 while(iF<jF):
-                    s=F[iF]
+                    s=[F[iF,0],F[iF,1]]
                     jF, lowx, highx=pathfinder(bwimg, F, check, par, w, s[0]-1, s[1], jF, iF, lowx, highx, y, miss, added, Vertikal, myconst, Vertikalpenalty, bestl, bestr, slaycount)
                     jF, lowx, highx=pathfinder(bwimg, F, check, par, w, s[0]+1, s[1], jF, iF, lowx, highx, y, miss, added, Vertikal, myconst, Vertikalpenalty, bestl, bestr, slaycount)
                     jF, lowx, highx=pathfinder(bwimg, F, check, par, w, s[0], s[1]-1, jF, iF, lowx, highx, y, miss, added, Vertikal, myconst, Vertikalpenalty, bestl, bestr, slaycount)
                     jF, lowx, highx=pathfinder(bwimg, F, check, par, w, s[0], s[1]+1, jF, iF, lowx, highx, y, miss, added, Vertikal, myconst, Vertikalpenalty, bestl, bestr, slaycount)
                     iF+=1
-                #print(y, jF, lowx, highx)
-                #print('PedE', pointdead, jF, highx, lowx)
                 for j1 in range(jF-1, -1, -1):
-                    if (w[j1]==-1 and bwimg[F[j1][0], F[j1][1]]==0):
+                    if (w[j1]==-1 and bwimg[F[j1,0], F[j1,1]]==0):
                         break
                 while (j1>=0):
-                    pathway.append(F[j1])
+                    #pathway.append((F[j1,0], F[j1,1]))
+                    pathway[lenpath,0]=F[j1,0]
+                    pathway[lenpath,1]=F[j1,1]
+                    lenpath+=1
                     j1=par[j1]
                 
                 for j2 in range(jF-1, -1, -1):
-                    if (w[j2]==1 and bwimg[F[j2][0], F[j2][1]]==0):
+                    if (w[j2]==1 and bwimg[F[j2,0], F[j2,1]]==0):
                         break
                 
-                p2=[]
+                lp2=0
                 while (j2>0):
-                    p2.append(F[j2])
+                    #p2.append((F[j2,0],F[j2,1]))
+                    p2[lp2,0]=F[j2,0]
+                    p2[lp2,1]=F[j2,1]
+                    lp2+=1
                     j2=par[j2]
                 
-                pathway.extend(p2[::-1])
-                for x in F:
-                    check[x[0], x[1]]=0
+                for x in range(lp2-1,-1,-1):
+                    pathway[lenpath,0]=p2[x,0]
+                    pathway[lenpath,1]=p2[x,1]
+                    lenpath+=1
+                
+                for x in range(jF):
+                    check[F[x,0], F[x,1]]=0
                 if (highx-lowx>shp[1]*Hyperparameters['Lineslayer']):
-                    sv, gr=blackening(bwimg, np.asarray(pathway))
-                    #sv, gr=cleanblack(bwimg, pathway)
-                    if (Hyperparameters['Showpaths']==1):
-                        fig, ax=plt.subplots(1,1,figsize=(18,18))
-                        petrify(pathway, ax)
-                        ax.imshow(bwimg, cmap='Greys',  interpolation='nearest')
-                        plt.show()
+                    sv, gr=blackening(bwimg, pathway, lenpath)
+                    pway=[]
+                    for x in range(lenpath):
+                        pway.append((pathway[x,0],pathway[x,1]))
                     
-                    solution.append((sv, gr, lowx, highx, pathway))
-            y+=1
+                    solution.append((sv, gr, lowx, highx, pway))
+            y+=1    
     return solution
