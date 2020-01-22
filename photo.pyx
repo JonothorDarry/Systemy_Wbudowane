@@ -2,7 +2,6 @@ import math
 import numpy as np
 cimport numpy as np
 from cpython cimport array
-import time
 cimport cython
 
 Hyperparameters={'Vertikal':(6,3,4,1), 'Upgrade':70, 'Blackness':10, 'Depth':3, 'Lineslayer':0.25, 'Showpaths':0, 'Change':4}
@@ -162,7 +161,7 @@ cdef (int,int,int) pathfinder(unsigned char[:,:] bwimg, int[:,:] F,
     return (p, lowx, highx)
 
 
-def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
+def findlinez(unsigned char[:,:] bwimg, shp):
     cdef int skv=2, y=1, kk=1, iF=0, jF=1, deadl=0, deadr=1, highx, lowx, x1, x2, C=140000, myconst=Hyperparameters['Upgrade']
     cdef int lenpath=0, lp2=0, D=3000
     solution=[]
@@ -179,7 +178,7 @@ def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
     cdef int[:,:] F=np.zeros((C, 2), dtype='int32')
     cdef int[:,:] pathway=np.zeros((D, 2), dtype='int32')
     cdef int[:,:] p2=np.zeros((D, 2), dtype='int32')
-    cdef double ct=0, t1=0, t2=0, t3=0, t4=0
+    
     cdef int vv1=bwimg.shape[0], vv2=bwimg.shape[1]
     
     
@@ -208,7 +207,6 @@ def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
                 highx, lowx=xl, xl
                 iF, jF=0, 1
                 
-                ct=time.time()
                 while(iF<jF):
                     s=[F[iF,0],F[iF,1]]
                     jF, lowx, highx=pathfinder(bwimg, F, check, par, w, s[0]-1, s[1], jF, iF, lowx, highx, y, miss, added, Vertikal, myconst, bestl, bestr, slaycount, vv1, vv2)
@@ -216,8 +214,7 @@ def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
                     jF, lowx, highx=pathfinder(bwimg, F, check, par, w, s[0], s[1]-1, jF, iF, lowx, highx, y, miss, added, Vertikal, myconst, bestl, bestr, slaycount, vv1, vv2)
                     jF, lowx, highx=pathfinder(bwimg, F, check, par, w, s[0], s[1]+1, jF, iF, lowx, highx, y, miss, added, Vertikal, myconst, bestl, bestr, slaycount, vv1, vv2)
                     iF+=1
-                t1=t1+time.time()-ct
-                ct=time.time()
+                
                 for j1 in range(jF-1, -1, -1):
                     if (w[j1]==-1 and bwimg[F[j1,0], F[j1,1]]==0):
                         break
@@ -247,9 +244,6 @@ def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
                 
                 for x in range(jF):
                     check[F[x,0], F[x,1]]=0
-                    
-                t2=t2+time.time()-ct
-                ct=time.time()
                 
                 if (highx-lowx>shp[1]*Hyperparameters['Lineslayer']):
                     sv, gr=blackening(bwimg, pathway, lenpath)
@@ -258,10 +252,6 @@ def findlinez(np.ndarray[unsigned char, ndim=2] bwimg, shp):
                         pway.append((pathway[x,0],pathway[x,1]))
                     
                     solution.append((sv, gr, lowx, highx, pway))
-                t4=t4+time.time()-ct
             y+=1
-    #print("BASIC FIFO: {}".format(t1))
-    #print("PATH+CHECK: {}".format(t2))
-    #print("SOLUTIONSS: {}".format(t4))
     
     return solution
