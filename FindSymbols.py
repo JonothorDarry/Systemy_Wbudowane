@@ -1,15 +1,14 @@
 import numpy as np
 import cv2 as cv
-import matplotlib.pyplot as plt
 import time
 import random
 import math
 import sys
-from os import listdir
+import os
 from photo import *
 
 data_path = 'data/'
-symbols_path = 'symbols/'
+symbols_path = os.path.abspath(os.path.dirname(__file__))+'/symbols/'
 
 
 symbol_paths = ['Note-Heads/1.png', 'Note-Heads/3.png', 'Note-Heads/2.png']
@@ -645,5 +644,6 @@ def parser(f):
         #plt.figure(figsize = (22, 22))
         #plot_color(img_color[:, :, (2, 1, 0)])
         #plt.show()
+
 parser([cv.imread(sys.argv[1], cv.IMREAD_GRAYSCALE)])
 print()
