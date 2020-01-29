@@ -308,8 +308,10 @@ class Note:
 
 
 def get_staff_height(staff_lines):
+    if len(staff_lines) == 0:
+        return 37
     heights = [staff[3][i] - staff[1][i] for staff in staff_lines for i in range(2)]
-    return np.median(heights)
+    return max(np.median(heights), 10)
 
 def get_staff_left_right(staff_lines):
     x_left = [staff[i][0] for staff in staff_lines for i in (0, 2)]
@@ -338,7 +340,7 @@ def get_stem_end(img, x, y, up):
 
 TREBLE, BASS, UNKNOWN = 1, 2, -1
 def get_note_pitch(position, clef):
-    pitch = ['C', 'D', 'E', 'F', 'G', 'A', 'H']
+    pitch = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
     if clef == TREBLE:
         return pitch[(position + 2) % len(pitch)]
     elif clef == BASS:
@@ -567,7 +569,6 @@ def detect_notes(img, img_original, staff_lines):
         if stem_end_avg_left > th or stem_end_avg_right > th:
             note.duration = 8
 
-    strange=[]
     # Detect accidentals
     for note in detected_notes:
         center = note.center
@@ -592,9 +593,7 @@ def detect_notes(img, img_original, staff_lines):
             if not is_note:
                 img_color = cv.rectangle(img_color, (note.bbox[0][0] - width, int(center[1] - height/2)),
                                          (note.bbox[0][0], int(center[1] + height/2)), (0, 200, 255), 2)
-                strange.append(note)
 
-    superarray=[]
     # Draw bounding box
     for note in detected_notes:
         bbox = note.stem_bbox
@@ -610,40 +609,37 @@ def detect_notes(img, img_original, staff_lines):
         if note.duration > 0:
             img_color = cv.putText(img_color, str(note.pitch), (note.stem_bbox[0][0], note.stem_bbox[0][1] - 5),
                                    cv.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
-            superarray.append(note)
 
-    #return img_color
-    return superarray, strange, clefs, img_color
+    return detected_notes, clefs, img_color
 
 
-def parser(f):
-    preprocessed_data = []
-    i = 0
-    for d in f:
-        #decorate(i)
-        i = i + 1
-        preprocessed_data.append(remove_staff_lines(d))
+def process_image(image):
+    image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    print('Detecting staff lines...')
+    img, img_original, staff_lines = remove_staff_lines(image)
 
-    i = 0
-    for img, img_original, staff_lines in preprocessed_data:
-        #decorate(i)
-        i = i + 1
-        sar, sar2, clf, img_color = detect_notes(img, img_original, staff_lines)
+    print('Detecting notes...')
+    notes, clefs, img_color = detect_notes(img, img_original, staff_lines)
 
-        for x in sar2:
-            x.duration='#'
-        sar.extend(sar2)
+    # for x in sar2:
+        # x.duration='#'
+    # sar.extend(sar2)
 
-        sar=sorted(sar, key=(lambda x:(x.staff*10000000+10000*x.center[0]+x.center[1])))
-        for i, x in enumerate(sar):
-            if (i==0 or sar[i-1].staff!=sar[i].staff):
-                print()
-                zvx=print('TR', end=' ') if (clf[sar[i].staff][0]==1) else print('CL', end=' ')
-            print(x.pitch, x.duration, end=' ', sep='')
+    notes = sorted(notes, key=(lambda x:(10000000*x.staff + 10000*x.center[0] + x.center[1])))
+    for i, note in enumerate(notes):
+        if i == 0 or notes[i-1].staff != notes[i].staff:
+            print()
 
-        #plt.figure(figsize = (22, 22))
-        #plot_color(img_color[:, :, (2, 1, 0)])
-        #plt.show()
+            if clefs[note.staff][0] == TREBLE:
+                print('TR', end=' ')
+            else:
+                print('BS', end=' ')
+        print(note.pitch, note.duration, end=' ', sep='')
+    print()
 
-parser([cv.imread(sys.argv[1], cv.IMREAD_GRAYSCALE)])
-print()
+    return notes
+
+if __name__ == '__main__':
+    process_image(cv.imread(sys.argv[1], cv.IMREAD_GRAYSCALE))
+    print()
+
