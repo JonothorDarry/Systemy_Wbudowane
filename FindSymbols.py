@@ -620,6 +620,7 @@ def process_image(image):
 
     print('Detecting notes...')
     notes, clefs, img_color = detect_notes(img, img_original, staff_lines)
+    cv.imwrite('notes.png', img_color)
 
     # for x in sar2:
         # x.duration='#'

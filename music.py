@@ -3,6 +3,7 @@ from time import sleep
 from mingus.containers import Note, Bar, Track
 from mingus.midi import fluidsynth
 from FindSymbols import process_image
+from mingusfix import Player
 
 def grab_image():
     device_id = 0 # /dev/video4
@@ -21,22 +22,24 @@ def grab_image():
 def parse_notes(notes):
     track = Track()
     for note in notes:
-        if not track.add_notes(note.pitch, note.duration):
+        n = Note(note.pitch, 4 + (note.location + 2)//7)
+        if not track.add_notes(n, note.duration):
             track.add_bar(Bar())
-            track.add_notes(note.pitch, note.duration)
+            track.add_notes(n, note.duration)
     return track
 
 if __name__ == '__main__':
     print('Taking photo of notes...')
     image = grab_image()
     cv.imwrite('captured-image.png', image)
-    image = cv.imread('img-sample.jpg')
+    #image = cv.imread('img-sample.jpg')
 
     print('Processing image...')
     notes = process_image(image)
     track = parse_notes(notes)
 
     print('Playing music...', flush=True)
+    fluidsynth.midi = Player()
     soundfont = 'GeneralUser_GS_1.442-MuseScore/GeneralUser GS MuseScore v1.442.sf2'
     fluidsynth.init(soundfont, 'alsa')
 
