@@ -7,10 +7,35 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{listings}
+\usepackage{color}
 \usepackage[svgnames]{xcolor}
 \usepackage[a4paper,bindingoffset=0.2in,%
 left=1in,right=1in,top=1.5in,bottom=1.5in,%
 footskip=.25in]{geometry}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+	language=Python,
+	aboveskip=3mm,
+	belowskip=3mm,
+	showstringspaces=false,
+	columns=flexible,
+	basicstyle={\small\ttfamily},
+	numbers=none,
+	numberstyle=\tiny\color{gray},
+	keywordstyle=\color{blue},
+	commentstyle=\color{dkgreen},
+	stringstyle=\color{mauve},
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=3,
+	extendedchars=true,
+	literate={ą}{{\k a}}1 {ę}{{\k e}}1 {ś}{{\'s}}1 {ć}{{\'c}}1 {ź}{{\'z}}1 {ż}{{\. z}}1 {ń}{{\'n}}1 {ł}{{\l}}1 {ó}{{\'o}}1,
+}
+
 \pagenumbering{gobble}
 \graphicspath{{./zdjs/}}
 
@@ -32,7 +57,7 @@ Celem projektu było zaimplementowanie aplikacji odczytującej nuty z obrazu z k
 \end{figure}
 	
 \section{Projekt a realizacja}
-Aplikacja została napisana w języku Python i Cython. Rozpoznawanie nut zostało zaimplementowane przy użyciu biblioteki OpenCV. Aplikacja jest w stanie rozpoznać nuty z wysoką skutecznością, o ile zdjęcie zostało zrobione w dobrych warunkach oświetleniowych. Algorytm rozpoznaje tylko część symboli - nuty (całe nuty, półnuty, ćwierćnuty i ósemki) oraz klucze. Tą część algorytmu można by rozszerzyć o rozpoznawanie większej ilości symboli. Dokładność rozpoznawania nut również można by ulepszyć na przykład poprzez zastosowanie maszynowego uczenia się.
+Aplikacja została napisana w języku Python i Cython. Rozpoznawanie nut zostało zaimplementowane przy użyciu biblioteki OpenCV. Aplikacja jest w stanie rozpoznać nuty z wysoką skutecznością, o ile zdjęcie zostało zrobione w dobrych warunkach oświetleniowych. Algorytm rozpoznaje tylko część symboli - nuty (całe nuty, półnuty, ćwierćnuty i ósemki) oraz klucze. Tą część algorytmu można by rozszerzyć o rozpoznawanie większej ilości symboli. Dokładność rozpoznawania nut również można by ulepszyć na przykład poprzez zastosowanie metod maszynowego uczenia.
 	
 W trakcie rozwijania projektu dużą przeszkodą była szybkość działania. Dzięki przepisaniu części kodu do języka Cython oraz optymalizacjom aplikacja działa zadowalająco szybko.
 	
@@ -40,9 +65,28 @@ Pierwotnie w projekcie zakładaliśmy użycie płytki BeagleBone Black. Zdecydow
 	
 Aplikacja nie pozwala na wybranie dźwięku instrumentu, co było początkowo planowane. Aplikacja nie odtwarza nut z obu pięciolinii jednocześnie - są odtwarzane po kolei.
 	
-Aplikację można rozwinąć o lepszy interfejs użytkownika. Obecnie aplikacja jest uruchamiana z linii poleceń. Warto by było dodać na przykład GUI pokazujące obraz z kamery lub przycisk umożliwiający wykonanie zdjęcia. Brak interfejsu utrudnia ocenę, czy aplikacja działa poprawnie.
+Aplikację można rozwinąć o lepszy interfejs użytkownika. Obecnie aplikacja jest uruchamiana z linii poleceń. Warto dodać na przykład GUI pokazujące obraz z kamery lub przycisk umożliwiający wykonanie zdjęcia. Brak interfejsu utrudnia ocenę, czy aplikacja działa poprawnie.
 
 \section{Kluczowe fragmenty kodu}
+\begin{lstlisting}[language=Python]
+#Binaryzacja obrazka - przyjmuje jako input obraz w odcieniach szarości, zwraca obraz czarno biały z uwypuklonymi ciemniejszymi niż tło obszarami. Opiera się na kompletnym zaciemnieniu obszarów, wokół których kolor nigdy się nie zmienia i standardowej binaryzacji dla pozostałych obszarów obrazka
+
+def binarization(bwimg):
+	edges = cv.Canny(bwimg,50,150,apertureSize = 3)
+	edges2=cv.filter2D(bwimg, -1, kernel[1])
+	edges2=cv.Canny(edges2,50,150,apertureSize = 3)
+	bwimg=cv.adaptiveThreshold(bwimg, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, Hypers['Binarization_conn'], 1)
+	###i wiele linii więcej
+
+#Rotacja obrazka - przyjmuje obraz przed i po binaryzacji, znajduje długie linie na oryginalnym obrazku po czym w zależności od tego, jaki jest w przybliżeniu do 1.8 stopni najczęściej występujący kąt linii, obraca obrazek tak, aby linie znajdujące się pod tym kątem leżały poziomo do obrazka
+
+def rotate_image(img, fimg):
+	img2=fimg.copy()
+	edges = cv.Canny(img2,50,150,apertureSize = 3)
+	lines = cv.HoughLinesP(edges,1,np.pi/180,100,100,10)
+	###i wiele linii więcej
+	
+\end{lstlisting}
 
 \section{Zdjęcia fizycznych połączeń urządzeń}
 \begin{figure}[h!]
@@ -71,6 +115,6 @@ Aplikację można rozwinąć o lepszy interfejs użytkownika. Obecnie aplikacja 
 \end{figure}
 
 \section{Podsumowanie, wnioski}
-Aplikacja realizuje swój cel, choć są elementy które można poprawić lub które nie zostały zaimplementowane. Użyty przez nas algorytm uzyskuje wysoką skuteczność przy dobrej jakości zdjęcia; zasadna była by próba ulepszenia kodu poprzez użycie metod adaptatywnych, opartych na funkcji kosztu zamiast metod analitycznych przetwarzania obrazu.
+Aplikacja realizuje swój cel, choć są elementy które można poprawić lub które nie zostały zaimplementowane. Użyty przez nas algorytm uzyskuje wysoką skuteczność przy dobrej jakości zdjęcia; zasadna byłaby próba ulepszenia kodu poprzez użycie metod adaptatywnych, opartych na funkcji kosztu zamiast metod analitycznych przetwarzania obrazu.
 
 \end{document}
