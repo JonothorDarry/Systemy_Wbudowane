@@ -110,34 +110,27 @@ def detect_notes(img, img_original, staff_lines):
 	check_if_eightnote(img) # Sprawdzenie czy nuta jest ósemką
 \end{lstlisting}
 
+\section{Podsumowanie, wnioski}
+Aplikacja realizuje swój cel, choć są elementy które można poprawić lub które nie zostały zaimplementowane. Użyty przez nas algorytm uzyskuje wysoką skuteczność przy dobrej jakości zdjęciach. Problem detekcji nut (optical music recognition) jest problemem wielokrotnie trudniejszym niż sama integracja kodu z Raspberry Pi. W najnowszych pracach naukowych odchodzi się od użytych w tym projekcie metod analitycznych na rzecz metod uczenia maszynowego, w szczególności konwolucyjnych sieci neuronowych.
+
+\clearpage
 
 \section{Zdjęcia urządzenia}
 \begin{figure}[h!]
 	\centering
-	\begin{subfigure}[b]{0.32\linewidth}
-		\includegraphics[width=\linewidth]{Zdj0.png}
-		\caption{Pierwszy podpis}
+	\begin{subfigure}[b]{0.45\linewidth}
+		\includegraphics[width=1.7\linewidth,angle=270,origin=c]{DSC_0071.JPG}
 	\end{subfigure}
-	\begin{subfigure}[b]{0.32\linewidth}
-		\includegraphics[width=\linewidth]{Zdj0.png}
-		\caption{Drugi podpis}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.32\linewidth}
-		\includegraphics[width=\linewidth]{Zdj0.png}
-		\caption{Trzeci podpis}
-	\end{subfigure}
-	
-	\begin{subfigure}[b]{0.48\linewidth}
-		\includegraphics[width=\linewidth]{Zdj0.png}
-		\caption{Czwarty podpis}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.48\linewidth}
-		\includegraphics[width=\linewidth]{Zdj0.png}
-		\caption{Piąty podpis}
+	\begin{subfigure}[b]{0.45\linewidth}
+		\includegraphics[width=1.7\linewidth,angle=270,origin=c]{DSC_0075.JPG}
 	\end{subfigure}
 \end{figure}
 
-\section{Podsumowanie, wnioski}
-Aplikacja realizuje swój cel, choć są elementy które można poprawić lub które nie zostały zaimplementowane. Użyty przez nas algorytm uzyskuje wysoką skuteczność przy dobrej jakości zdjęciach. Problem detekcji nut (optical music recognition) jest problemem wielokrotnie trudniejszym niż sama integracja kodu z Raspberry Pi. W najnowszych pracach naukowych odchodzi się od użytych w tym projekcie metod analitycznych na rzecz metod uczenia maszynowego, w szczególności konwolucyjnych sieci neuronowych.
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.9\linewidth]{DSC_0077.JPG}
+\end{figure}
+
+
 
 \end{document}
