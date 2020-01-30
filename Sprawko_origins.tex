@@ -4,11 +4,12 @@
 \usepackage{lmodern}
 \usepackage{graphicx}
 \usepackage{subcaption}
-
-
-
 \usepackage{listings}
 \usepackage{color}
+\usepackage[svgnames]{xcolor}
+\usepackage[a4paper,bindingoffset=0.2in,%
+left=1in,right=1in,top=1.5in,bottom=1.5in,%
+footskip=.25in]{geometry}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
@@ -33,13 +34,8 @@
 	literate={ą}{{\k a}}1 {ę}{{\k e}}1 {ś}{{\'s}}1 {ć}{{\'c}}1 {ź}{{\'z}}1 {ż}{{\. z}}1 {ń}{{\'n}}1 {ł}{{\l}}1 {ó}{{\'o}}1,
 }
 
-
-\usepackage[svgnames]{xcolor}
-\usepackage[a4paper,bindingoffset=0.2in,%
-            left=0.5in,right=0.5in,top=0.5in,bottom=1in,%
-            footskip=.25in]{geometry}
 \pagenumbering{gobble}
-\usepackage[colorlinks=true, linkcolor=Black, urlcolor=Blue]{hyperref}
+\graphicspath{{./zdjs/}}
 
 
 \begin{document}
@@ -58,6 +54,12 @@ Celem projektu było zaimplementowanie aplikacji odczytującej nuty z obrazu z k
 \end{enumerate}
 
 \subsection{Schemat}
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.9\linewidth]{SW-schematic.png}
+	\caption{Schemat połączeń}
+	\label{fig:schemat}
+\end{figure}
 	
 \section{Projekt a realizacja}
 Aplikacja została napisana w języku Python i Cython. Rozpoznawanie nut zostało zaimplementowane przy użyciu biblioteki OpenCV. Aplikacja jest w stanie rozpoznać nuty z wysoką skutecznością, o ile zdjęcie zostało zrobione w dobrych warunkach oświetleniowych. Algorytm rozpoznaje tylko część symboli - nuty (całe nuty, półnuty, ćwierćnuty i ósemki) oraz klucze. Tą część algorytmu można by rozszerzyć o rozpoznawanie większej ilości symboli. Dokładność rozpoznawania nut również można by ulepszyć na przykład poprzez zastosowanie metod maszynowego uczenia.
@@ -69,8 +71,10 @@ Pierwotnie w projekcie zakładaliśmy użycie płytki BeagleBone Black. Zdecydow
 Aplikacja nie pozwala na wybranie dźwięku instrumentu, co było początkowo planowane. Aplikacja odtwarza jednocześnie nuty tylko z jednej pięciolinii, a nie z obu.
 
 Aplikację można by rozwinąć o lepszy interfejs użytkownika. Obecnie aplikacja jest uruchamiana z linii poleceń. Warto by było dodać na przykład GUI pokazujące obraz z kamery lub przycisk umożliwiający wykonanie zdjęcia.
+Aplikacja nie pozwala na wybranie dźwięku instrumentu, co było początkowo planowane. Aplikacja nie odtwarza nut z obu pięciolinii jednocześnie - są odtwarzane po kolei.
+	
+Aplikację można rozwinąć o lepszy interfejs użytkownika. Obecnie aplikacja jest uruchamiana z linii poleceń. Warto dodać na przykład GUI pokazujące obraz z kamery lub przycisk umożliwiający wykonanie zdjęcia. Brak interfejsu utrudnia ocenę, czy aplikacja działa poprawnie.
 
-\clearpage
 \section{Kluczowe fragmenty kodu}
 \begin{lstlisting}[language=Python]
 #Binaryzacja obrazka - przyjmuje jako input obraz w odcieniach szarości, zwraca obraz czarno biały z uwypuklonymi ciemniejszymi niż tło obszarami. Opiera się na kompletnym zaciemnieniu obszarów, wokół których kolor nigdy się nie zmienia i standardowej binaryzacji dla pozostałych obszarów obrazka
@@ -105,7 +109,7 @@ def findlinez(unsigned char[:,:] bwimg, shp):
 	cdef int[:] w=np.zeros((C), dtype='int32')
 	###Cała ta heurystyka ma dalej około 300 linijek...
 	return solution
-	
+
 #Znajdowanie pięciolinii wśród usuniętych linii - przyjmuje obrazek z usuniętymi liniami(img) i ich miejscami w obrazku(sol), zwraca miejsca występowania pięciolinii i ich parametry - szczególności wysokość pięciolinii i grubość linii, korzystając między innymi ze struktury zbiorów rozłącznych.
 def line5finder(sol, img):
 	dp=[0]*len(sol)
@@ -148,37 +152,35 @@ def remove_staff_lines(input_img):
 	return ~img2, padded, wynne
 
 
-
 \end{lstlisting}
 
-\clearpage
 \section{Zdjęcia fizycznych połączeń urządzeń}
 \begin{figure}[h!]
 	\centering
 	\begin{subfigure}[b]{0.32\linewidth}
-		\includegraphics[width=\linewidth]{zdjs/Zdj0.png}
+		\includegraphics[width=\linewidth]{Zdj0.png}
 		\caption{Pierwszy podpis}
 	\end{subfigure}
 	\begin{subfigure}[b]{0.32\linewidth}
-		\includegraphics[width=\linewidth]{zdjs/Zdj0.png}
+		\includegraphics[width=\linewidth]{Zdj0.png}
 		\caption{Drugi podpis}
 	\end{subfigure}
 	\begin{subfigure}[b]{0.32\linewidth}
-		\includegraphics[width=\linewidth]{zdjs/Zdj0.png}
+		\includegraphics[width=\linewidth]{Zdj0.png}
 		\caption{Trzeci podpis}
 	\end{subfigure}
 	
 	\begin{subfigure}[b]{0.48\linewidth}
-		\includegraphics[width=\linewidth]{zdjs/Zdj0.png}
+		\includegraphics[width=\linewidth]{Zdj0.png}
 		\caption{Czwarty podpis}
 	\end{subfigure}
 	\begin{subfigure}[b]{0.48\linewidth}
-		\includegraphics[width=\linewidth]{zdjs/Zdj0.png}
+		\includegraphics[width=\linewidth]{Zdj0.png}
 		\caption{Piąty podpis}
 	\end{subfigure}
 \end{figure}
 
 \section{Podsumowanie, wnioski}
-Aplikacja realizuje swój cel, choć są elementy które można by poprawić oraz takie które nie zostały zaimplementowane. Kod zaimplementowany przez nas uzyskuje wysoką skuteczność przy korzystnej scenie zdjęcia; zasadna byłaby próba ulepszenia kodu poprzez użycie metod adaptatywnych, opartych na funkcji kosztu zamiast metod analitycznych przetwarzania obrazu.
+Aplikacja realizuje swój cel, choć są elementy które można poprawić lub które nie zostały zaimplementowane. Użyty przez nas algorytm uzyskuje wysoką skuteczność przy dobrej jakości zdjęcia; zasadna byłaby próba ulepszenia kodu poprzez użycie metod adaptatywnych, opartych na funkcji kosztu zamiast metod analitycznych przetwarzania obrazu.
 
 \end{document}
